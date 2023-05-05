@@ -85,7 +85,7 @@ async def send_time(message: types.Message):
 async def ticket(message: types.Message):
     if str(message.text).lower() in ticket_dict:
         media = FSInputFile(path=ticket_dict[message.text.lower()])
-        await BOT.send_document(chat_id=message.from_user.id, document=media)
+        await BOT.send_document(chat_id=message.chat.id, document=media)
 
 
     
