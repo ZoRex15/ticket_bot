@@ -16,19 +16,19 @@ BOT: Bot = Bot(token=BOT_TOKEN)
 dp: Dispatcher = Dispatcher()
 
 
-ticket_dict = {'билет 1':'ticket/Билет 1.pdf', 'билет 2': 'ticket/Билет 2.docx',
-                'билет 3':'ticket/Билет 3.docx', 'билет 4':'ticket/Билет 4.docx',
-                'билет 5':'ticket/Билет 5.docx', 'билет 6':'ticket/Билет 6.docx',
-                'билет 7':'ticket/Билет 7.docx', 'билет 8':'ticket/Билет 8.docx',
-                'билет 9':'ticket/Билет 9.docx', 'билет 10':'ticket/Билет 10.docx',
-                'билет 11':'ticket/Билет 11.docx', 'билет 12':'ticket/Билет 12.docx',
-                'билет 13':'ticket/Билет 13.docx', 'билет 14':'ticket/Билет 14.docx',
-                'билет 15':'ticket/Билет 15.docx', 'билет 16':'ticket/Билет 16.docx',
-                'билет 17':'ticket/Билет 17.docx', 'билет 18':'ticket/Билет 18.docx',
-                'билет 19':'ticket/Билет 19.docx', 'билет 20':'ticket/Билет 20.docx',
-                'билет 21':'ticket/Билет 21.docx', 'билет 22':'ticket/Билет 22.docx',
-                'билет 23':'ticket/Билет 23.docx', 'билет 24':'ticket/Билет 24.docx',
-                'билет 25':'ticket/Билет 25.docx'} 
+ticket_dict = {'билет 1':'ticket/Билет 1.pdf', 'билет 2': 'ticket/Билет 2.pdf',
+                'билет 3':'ticket/Билет 3.pdf', 'билет 4':'ticket/Билет 4.pdf',
+                'билет 5':'ticket/Билет 5.pdf', 'билет 6':'ticket/Билет 6.pdf',
+                'билет 7':'ticket/Билет 7.pdf', 'билет 8':'ticket/Билет 8.pdf',
+                'билет 9':'ticket/Билет 9.pdf', 'билет 10':'ticket/Билет 10.pdf',
+                'билет 11':'ticket/Билет 11.pdf', 'билет 12':'ticket/Билет 12.pdf',
+                'билет 13':'ticket/Билет 13.pdf', 'билет 14':'ticket/Билет 14.pdf',
+                'билет 15':'ticket/Билет 15.pdf', 'билет 16':'ticket/Билет 16.pdf',
+                'билет 17':'ticket/Билет 17.pdf', 'билет 18':'ticket/Билет 18.pdf',
+                'билет 19':'ticket/Билет 19.pdf', 'билет 20':'ticket/Билет 20.pdf',
+                'билет 21':'ticket/Билет 21.pdf', 'билет 22':'ticket/Билет 22.pdf',
+                'билет 23':'ticket/Билет 23.pdf', 'билет 24':'ticket/Билет 24.pdf',
+                'билет 25':'ticket/Билет 25.pdf'} 
 
 help_text = '''
 Бот скидывает билеты по истории 
