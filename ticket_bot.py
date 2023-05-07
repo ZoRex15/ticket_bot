@@ -35,7 +35,7 @@ help_text = '''
 если ему написать Билет (номер билета)
 пример: Билет 1
 также допустимо БиЛет 1
-результат будет тотже'''
+результат будет тот же'''
 
 commands_text = '''
 <b>/help</b> - <em>Инструкция по использыванию бота</em>
@@ -70,7 +70,7 @@ async def send_help(message: types.Message):
 
 @dp.message(Command(commands=['start']))
 async def send_start(message: types.Message):
-    await BOT.send_message(chat_id=message.chat.id,text='Добро пожаловать в наш телеграм бот', reply_markup=kb)
+    await BOT.send_message(chat_id=message.chat.id,text='Добро пожаловать в наш телеграм бот!', reply_markup=kb)
 
 
 @dp.message(Command(commands=['time']))
