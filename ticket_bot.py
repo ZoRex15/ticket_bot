@@ -6,6 +6,7 @@ from aiogram.filters import Command
 import datetime
 from keyboard import kb, ikb
 from config import Config, load_config
+from text import start_text, commands_text, help_text
 
 config: Config = load_config()
 BOT_TOKEN: str = config.tg_bot.token
@@ -30,20 +31,7 @@ ticket_dict = {'билет 1':'ticket/Билет 1.pdf', 'билет 2': 'ticket
                 'билет 23':'ticket/Билет 23.pdf', 'билет 24':'ticket/Билет 24.pdf',
                 'билет 25':'ticket/Билет 25.pdf'} 
 
-help_text = '''
-Бот скидывает билеты по истории 
-если ему написать Билет (номер билета)
-пример: Билет 1
-также допустимо БиЛет 1
-результат будет тот же'''
 
-commands_text = '''
-<b>/help</b> - <em>Инструкция по использыванию бота</em>
-<b>/commands</b> - <em>Список команд</em>
-<b>/start</b> - <em>начать работу с ботом</em>
-<b>/website</b> - <em>Ссылка на сайт с тестами</em>
-<b>/time</b> - <em>Узнать сколько дней осталось до экзамена</em>
-'''
 
 
 
@@ -70,7 +58,7 @@ async def send_help(message: types.Message):
 
 @dp.message(Command(commands=['start']))
 async def send_start(message: types.Message):
-    await BOT.send_message(chat_id=message.chat.id,text='Добро пожаловать в наш телеграм бот!', reply_markup=kb)
+    await BOT.send_message(chat_id=message.chat.id,text=start_text, reply_markup=kb, parse_mode='HTML')
 
 
 @dp.message(Command(commands=['time']))
