@@ -6,7 +6,8 @@ from aiogram.filters import Command
 import datetime
 from keyboard import kb, ikb
 from config import Config, load_config
-from text import start_text, commands_text, help_text
+from text import commands_text, help_text
+
 
 config: Config = load_config()
 BOT_TOKEN: str = config.tg_bot.token
@@ -31,6 +32,20 @@ ticket_dict = {'билет 1':'ticket/Билет 1.pdf', 'билет 2': 'ticket
                 'билет 23':'ticket/Билет 23.pdf', 'билет 24':'ticket/Билет 24.pdf',
                 'билет 25':'ticket/Билет 25.pdf'} 
 
+ticket_bel_dict = {'билет 1 б':'ticket_bel/Б1.pdf', 'билет 2 б': 'ticket_bel/Б2.docx',
+                'билет 3 б':'ticket_bel/Б3.pdf', 'билет 4 б':'ticket_bel/Б4.pdf',
+                'билет 5 б':'ticket_bel/Б5.pdf', 'билет 6 б':'ticket_bel/Б6.pdf',
+                'билет 7 б':'ticket_bel/Б7.pdf', 'билет 8 б':'ticket_bel/Б8.pdf',
+                'билет 9 б':'ticket_bel/Б9.pdf', 'билет 10 б':'ticket_bel/Б10.pdf',
+                'билет 11 б':'ticket_bel/Б11.pdf', 'билет 12 б':'ticket_bel/Б12.pdf',
+                'билет 13 б':'ticket_bel/Б13.pdf', 'билет 14 б':'ticket_bel/Б14.pdf',
+                'билет 15 б':'ticket_bel/Б15.pdf', 'билет 16 б':'ticket_bel/Б16.pdf',
+                'билет 17 б':'ticket_bel/Б17.pdf', 'билет 18 б':'ticket_bel/Б18.pdf',
+                'билет 19 б':'ticket_bel/Б19.pdf', 'билет 20 б':'ticket_bel/Б20.pdf',
+                'билет 21 б':'ticket_bel/Б21.pdf', 'билет 22 б':'ticket_bel/Б22.pdf',
+                'билет 23 б':'ticket_bel/Б23.pdf', 'билет 24 б':'ticket_bel/Б24.pdf',
+                'билет 25 б':'ticket_bel/Б25.pdf'
+}
 
 
 
@@ -58,7 +73,14 @@ async def send_help(message: types.Message):
 
 @dp.message(Command(commands=['start']))
 async def send_start(message: types.Message):
-    await BOT.send_message(chat_id=message.chat.id,text=start_text, reply_markup=kb, parse_mode='HTML')
+    await BOT.send_message(chat_id=message.chat.id,reply_markup=kb, parse_mode='HTML',
+                           text=f'''
+Привет: <b><em>{message.from_user.full_name}</em></b>
+<b>Я телеграм бот предназначенный для того чтобы облегчить доступ к билетам.</b>
+Всего-то надо написать Билет (номер билета). 
+Пример: Билет 1
+<b>Если после номера билета добавить букву Б то билет будет на Белорусском языке.</b>
+Пример: Билет 1 Б''')
 
 
 @dp.message(Command(commands=['time']))
@@ -74,7 +96,10 @@ async def ticket(message: types.Message):
     if str(message.text).lower() in ticket_dict:
         media = FSInputFile(path=ticket_dict[message.text.lower()])
         await BOT.send_document(chat_id=message.chat.id, document=media)
-
+    else:
+        if str(message.text).lower() in ticket_bel_dict:
+            media = FSInputFile(path=ticket_bel_dict[message.text.lower()])
+            await BOT.send_document(chat_id=message.chat.id, document=media)
 
     
 if __name__ == '__main__':
