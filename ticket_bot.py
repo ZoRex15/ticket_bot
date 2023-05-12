@@ -4,7 +4,7 @@ from aiogram.types import FSInputFile
 from aiogram.types import CallbackQuery
 from aiogram.filters import Command
 import datetime
-from keyboard import kb, ikb
+from keyboard import kb, ikb, kb_bel
 from config import Config, load_config
 from text import commands_text, help_text
 
@@ -32,7 +32,7 @@ ticket_dict = {'билет 1':'ticket/Билет 1.pdf', 'билет 2': 'ticket
                 'билет 23':'ticket/Билет 23.pdf', 'билет 24':'ticket/Билет 24.pdf',
                 'билет 25':'ticket/Билет 25.pdf'} 
 
-ticket_bel_dict = {'билет 1 б':'ticket_bel/Б1.pdf', 'билет 2 б': 'ticket_bel/Б2.docx',
+ticket_bel_dict = {'билет 1 б':'ticket_bel/Б1.pdf', 'билет 2 б': 'ticket_bel/Б2.pdf',
                 'билет 3 б':'ticket_bel/Б3.pdf', 'билет 4 б':'ticket_bel/Б4.pdf',
                 'билет 5 б':'ticket_bel/Б5.pdf', 'билет 6 б':'ticket_bel/Б6.pdf',
                 'билет 7 б':'ticket_bel/Б7.pdf', 'билет 8 б':'ticket_bel/Б8.pdf',
@@ -57,6 +57,22 @@ def choose_plural(amount,declensions):
         return f'{amount} {declensions[1]}'
     else:
         return f'{amount} {declensions[2]}'
+    
+@dp.message(Command(commands=['BY']))
+async def BY_language(message: types.Message):
+    await BOT.send_message(chat_id=message.chat.id,
+                            text='<b>Клавиатура была сменена для беларусских билетов.</b>',
+                            reply_markup=kb_bel,
+                            parse_mode='HTML')
+    
+@dp.message(Command(commands=['RU']))
+async def RU_language(message: types.Message):
+    await BOT.send_message(
+        chat_id=message.chat.id,
+        text='<b>Клавиатруа была сменена для русских билетов.</b>',
+        reply_markup=kb,
+        parse_mode='HTML'
+    )
 
 @dp.message(Command(commands=['commands']))
 async def send_command(message: types.Message):
