@@ -84,7 +84,7 @@ async def send_website(message: types.Message):
 
 @dp.message(Command(commands=['help']))
 async def send_help(message: types.Message):
-    await BOT.send_message(chat_id=message.from_user.id, text=help_text)
+    await BOT.send_message(chat_id=message.chat.id, text=help_text)
     await message.delete()
 
 @dp.message(Command(commands=['start']))
