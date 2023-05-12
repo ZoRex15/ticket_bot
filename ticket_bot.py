@@ -58,14 +58,14 @@ def choose_plural(amount,declensions):
     else:
         return f'{amount} {declensions[2]}'
     
-@dp.message(Command(commands=['BY']))
+@dp.message(Command(commands=['by']))
 async def BY_language(message: types.Message):
     await BOT.send_message(chat_id=message.chat.id,
                             text='<b>Клавиатура была сменена для беларусских билетов.</b>',
                             reply_markup=kb_bel,
                             parse_mode='HTML')
     
-@dp.message(Command(commands=['RU']))
+@dp.message(Command(commands=['ru']))
 async def RU_language(message: types.Message):
     await BOT.send_message(
         chat_id=message.chat.id,
