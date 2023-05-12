@@ -13,6 +13,18 @@ kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True, keyboard=
     
 ])
 
+kb_bel = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True, keyboard=[
+    [KeyboardButton(text='Билет 1 Б'), KeyboardButton(text='Билет 2 Б'), KeyboardButton(text='Билет 3 Б')],
+    [KeyboardButton(text='Билет 4 Б'), KeyboardButton(text='Билет 5 Б'), KeyboardButton(text='Билет 6 Б')],
+    [KeyboardButton(text='Билет 7 Б'), KeyboardButton(text='Билет 8 Б'), KeyboardButton(text='Билет 9 Б')],
+    [KeyboardButton(text='Билет 10 Б'), KeyboardButton(text='Билет 11 Б'), KeyboardButton(text='Билет 12 Б')],
+    [KeyboardButton(text='Билет 13 Б'), KeyboardButton(text='Билет 14 Б'), KeyboardButton(text='Билет 15 Б')],
+    [KeyboardButton(text='Билет 16 Б'), KeyboardButton(text='Билет 17 Б'), KeyboardButton(text='Билет 18 Б')],
+    [KeyboardButton(text='Билет 19 Б'), KeyboardButton(text='Билет 20 Б'), KeyboardButton(text='Билет 21 Б')],
+    [KeyboardButton(text='Билет 22 Б'), KeyboardButton(text='Билет 23 Б'), KeyboardButton(text='Билет 24 Б')],
+    [KeyboardButton(text='Билет 25 Б')]
+])
+
 
 
 
