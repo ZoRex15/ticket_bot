@@ -6,7 +6,7 @@ from aiogram.filters import Command
 import datetime
 from keyboard import kb, ikb, kb_bel
 from config import Config, load_config
-from text import commands_text, help_text
+from text import commands_text, help_text, start_text
 
 
 config: Config = load_config()
@@ -89,14 +89,10 @@ async def send_help(message: types.Message):
 
 @dp.message(Command(commands=['start']))
 async def send_start(message: types.Message):
-    await BOT.send_message(chat_id=message.chat.id,reply_markup=kb, parse_mode='HTML',
-                           text=f'''
-Привет: <b><em>{message.from_user.full_name}</em></b>
-<b>Я телеграм бот предназначенный для того чтобы облегчить доступ к билетам.</b>
-Всего-то надо написать Билет (номер билета). 
-Пример: Билет 1
-<b>Если после номера билета добавить букву Б то билет будет на Белорусском языке.</b>
-Пример: Билет 1 Б''')
+    await BOT.send_message(chat_id=message.chat.id,
+                           reply_markup=kb,
+                            parse_mode='HTML',
+                           text=start_text.format(name=message.from_user.full_name))
 
 
 @dp.message(Command(commands=['time']))
