@@ -63,5 +63,5 @@ async def end_poll(poll: PollAnswer, state: FSMContext):
     if poll.option_ids[-1] == option_dict[f'ticket {test_number}']['question 5']:
         Database.append_to_crrect_answers(poll.user.id)
     print(LEXICON['end_poll'])
-    await poll.bot.send_message(chat_id=poll.user.id, text=LEXICON['end_poll'], reply_markup=keyboard_menu)
+    await poll.bot.send_message(chat_id=poll.user.id, text=LEXICON['end_poll'].format(result=Database.recet_and_get_a_correct_answers(poll.user.id)), reply_markup=keyboard_menu)
     await state.clear()

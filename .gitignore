@@ -1,6 +1,5 @@
 
 users.db
-tests.py
 # Byte-compiled / optimized / DLL files
 **/pycache/
 *.py[cod]
