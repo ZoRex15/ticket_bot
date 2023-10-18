@@ -62,7 +62,7 @@ class Database:
     def set_ticket_language(cls, ticket_language: str, user_id: int):
         connection = sqlite3.connect(cls.__DATABASE)
         cursor = connection.cursor()
-        cursor.execute('REPLACE INTO users (ticket_language, user_id) VALUES (?, ?)', (ticket_language, user_id))
+        cursor.execute('UPDATE users SET ticket_language = ? WHERE user_id = ?', (ticket_language, user_id))
         connection.commit()
         connection.close()
 
@@ -70,7 +70,7 @@ class Database:
     def set_test_number(cls, test_number: int, user_id: int):
         connection = sqlite3.connect(cls.__DATABASE)
         cursor = connection.cursor()
-        cursor.execute('REPLACE INTO users (test, user_id) VALUES (?, ?)', (test_number, user_id))
+        cursor.execute('UPDATE users SET test = ? WHERE user_id = ?', (test_number, user_id))
         connection.commit()
         connection.close()
     
@@ -109,7 +109,7 @@ class Database:
         cursor = connection.cursor()
         cursor.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
         result = cursor.fetchone()
-        cursor.execute('REPLACE INTO users (number_of_correct_answers, user_id) VALUES (?, ?)', (0, user_id))
+        cursor.execute('UPDATE users SET number_of_correct_answers = ? WHERE user_id = ?', (0, user_id))
         connection.commit()
         connection.close()
         return result[3]
