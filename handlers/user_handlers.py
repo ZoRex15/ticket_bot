@@ -94,8 +94,3 @@ async def send_ticket(message: Message, state: FSMContext):
     elif ticket_language == 'BY' and message.text.lower() in path_ticket_by:
         media: FSInputFile = FSInputFile(path=path_ticket_by[message.text.lower()])
         await message.answer_document(document=media)
-        
-
-
-
-
