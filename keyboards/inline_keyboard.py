@@ -15,3 +15,9 @@ menu = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='📄Перейти к тестам📄', callback_data='go_to_tests')],
     [InlineKeyboardButton(text='🔧Настройки⚙️', callback_data='settings')]
 ])
+
+admin_menu = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Изменить вопрос', callback_data='update_question')],
+    [InlineKeyboardButton(text='Изменить вариант ответа', callback_data='update_option')],
+    [InlineKeyboardButton(text='Изменить текст варианта ответа', callback_data='update_answer_text')]
+])
