@@ -7,13 +7,16 @@ from aiogram.fsm.context import FSMContext
 
 from lexicon.lexicon import LEXICON
 from keyboards.keyboard import start_setting, create_ticket_keyboard, keyboard_menu
-from keyboards.inline_keyboard import languages, help_menu, menu
-from FSM.state import FSMSettings, FSMTakeTheTest
+from keyboards.inline_keyboard import languages, help_menu, menu, admin_menu
+from FSM.state import FSMSettings, FSMTakeTheTest, FSMAdminState
 from path.path import path_ticket_by, path_ticket_ru
-from service.service import Database, create_text_menu
+from service.service import Database, _create_text_menu
+from filters.filters import IsAdmin
+from config.config import load_config, Config
 
-
+config: Config = load_config()
 router: Router = Router()
+
 
 @router.message(CommandStart(), StateFilter(default_state))
 async def start(message: Message, state: FSMContext):
@@ -30,12 +33,19 @@ async def help(message: Message, state: FSMContext):
 
 @router.message(Command(commands=['menu']), StateFilter(default_state))
 async def send_menu(message: Message, state: FSMContext):
-    await message.answer(text=create_text_menu(), reply_markup=menu)
+    await message.answer(text=_create_text_menu(), reply_markup=menu)
 
-@router.message(Command(commands=['cancel']), StateFilter(FSMTakeTheTest))
+@router.message(Command(commands=['cancel']), ~StateFilter(default_state))
 async def cancel(message: Message, state: FSMContext):
     await message.answer(LEXICON['cancel'], reply_markup=keyboard_menu)
     await state.clear()
+
+@router.message(Command(commands=['admin_menu']), StateFilter(default_state), IsAdmin(config.tg_bot.admin_ids))
+async def send_admin_menu(message: Message, state: FSMContext):
+    Database.create_admin_table()
+    Database.add_admin(message.from_user.id)
+    await message.answer(LEXICON['admin_menu'], reply_markup=admin_menu)
+    await state.set_state(FSMAdminState.in_admin_menu)
 
 @router.message(F.text == '🔧Настройки⚙️', StateFilter(default_state))
 async def start_settings(message: Message, state: FSMContext):
@@ -44,7 +54,7 @@ async def start_settings(message: Message, state: FSMContext):
 
 @router.message(F.text == 'Меню', StateFilter(default_state))
 async def send_menu(message: Message, state: FSMContext):
-    await message.answer(text=create_text_menu(), reply_markup=menu)
+    await message.answer(text=_create_text_menu(), reply_markup=menu)
 
 @router.callback_query(F.data == 'ru', StateFilter(FSMSettings.language_selection))
 async def set_ru_language(callback: CallbackQuery, state: FSMContext):
