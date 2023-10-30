@@ -1,7 +1,7 @@
 from config.config import Config, load_config
 import asyncio
 from aiogram import Bot, Dispatcher
-from handlers import user_handlers, test_handlers
+from handlers import user_handlers, test_handlers, admin_handlers
 from aiogram.fsm.storage.redis import Redis, RedisStorage
 from keyboards.set_menu import set_menu
 
@@ -13,6 +13,7 @@ async def main():
     dp: Dispatcher = Dispatcher(storage=storage)
     dp.include_router(user_handlers.router)
     dp.include_router(test_handlers.router)
+    dp.include_router(admin_handlers.router)
     await set_menu(bot)
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
