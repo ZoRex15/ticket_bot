@@ -7,10 +7,10 @@ from aiogram.fsm.context import FSMContext
 
 from lexicon.lexicon import LEXICON
 from keyboards.keyboard import start_setting, create_ticket_keyboard, keyboard_menu
-from keyboards.inline_keyboard import languages, help_menu, menu, admin_menu
+from keyboards.inline_keyboard import languages, help_menu, menu, admin_menu, create_pagination_inline_keyboard
 from FSM.state import FSMSettings, FSMTakeTheTest, FSMAdminState
 from path.path import path_ticket_by, path_ticket_ru
-from service.service import Database, _create_text_menu
+from service.service import Database, _create_text_menu, _create_test_result_page
 from filters.filters import IsAdmin
 from config.config import load_config, Config
 
@@ -94,6 +94,44 @@ async def settings(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete()
     await callback.message.answer(LEXICON['settings'], reply_markup=languages)
     await state.set_state(FSMSettings.language_selection)
+
+@router.callback_query(F.data == 'test_results_list', StateFilter(default_state))
+async def send_test_results_list(callback: CallbackQuery, state: FSMContext):
+    page = Database.get_user_page(callback.from_user.id)
+    await callback.message.delete()
+    await callback.message.answer(text=_create_test_result_page(
+        user_id=callback.from_user.id,
+        page=page
+    ),
+    reply_markup=create_pagination_inline_keyboard(page))
+
+
+@router.callback_query(F.data == 'forward', StateFilter(default_state))
+async def forward(callback: CallbackQuery, state: FSMContext):
+    page = Database.get_user_page(callback.from_user.id)
+    if page == 5:
+        await callback.answer(LEXICON['forward_error'])
+    else:
+        Database.update_page(callback.from_user.id, page + 1)
+        await callback.message.edit_text(text=_create_test_result_page(
+            user_id=callback.from_user.id,
+            page=page + 1
+        ),
+        reply_markup=create_pagination_inline_keyboard(page=page + 1))
+
+@router.callback_query(F.data == 'back', StateFilter(default_state))
+async def forward(callback: CallbackQuery, state: FSMContext):
+    page = Database.get_user_page(callback.from_user.id)
+    if page == 1:
+        await callback.answer(LEXICON['back_error'])
+    else:
+        Database.update_page(callback.from_user.id, page - 1)
+        await callback.message.edit_text(text=_create_test_result_page(
+            user_id=callback.from_user.id,
+            page=page - 1
+        ),
+        reply_markup=create_pagination_inline_keyboard(page=page - 1))
+
 
 @router.message(StateFilter(default_state))
 async def send_ticket(message: Message, state: FSMContext):
