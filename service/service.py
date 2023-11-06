@@ -29,6 +29,11 @@ def _create_poll_text(test_number: int, question_number: int) -> str:
 def _create_text_menu() -> str:
     return random.choice(PHRASES)
 
+def _create_test_result_page(user_id: int, page: int):
+    result = Database.get_test_results(user_id)[1:]
+    test_number = [_ for _ in range(1, 26)]
+    return '\n'.join([f'📄Тест {i}: {result}/5' for result, i in zip(result[5 * (page - 1):5 * page], test_number[5 * (page - 1):5 * page])])
+
 class Tests:
     with open('tests/tests.json', 'r', encoding='U8') as file:
         __TESTS = json.load(file)
@@ -86,9 +91,46 @@ class Database:
             ticket_language TEXT DEFAULT 'RU',
             test INTEGER DEFAULT 0,
             number_of_correct_answers INTEGER DEFAULT 0,
+            page INTEGER DEFAULT 1,
             PRIMARY KEY(user_id)
             )''')
+        cls.create_test_results_table(cls.__DATABASE)
+
+    @classmethod
+    def get_test_number(cls, user_id):
+        with sqlite3.connect(cls.__DATABASE) as connect:
+            cursor = connect.cursor()
+            cursor.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
+            result = cursor.fetchone()
+            return result[2]
+
+    @classmethod
+    def get_user_page(cls, user_id: int):
+        with sqlite3.connect(cls.__DATABASE) as connect:
+            cursor = connect.cursor()
+            cursor.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
+            result = cursor.fetchone()
+            return result[4]
+        
+    @classmethod
+    def update_page(cls, user_id: int, new_page: int):
+        with sqlite3.connect(cls.__DATABASE) as connect:
+            cursor = connect.cursor()
+            cursor.execute('UPDATE users SET page = ? WHERE user_id = ?', (new_page, user_id))
+        
+    @classmethod
+    def update_test_result(cls, user_id: int, test_number: int, test_result: int):
+        with sqlite3.connect(cls.__DATABASE) as connect:
+            cursor = connect.cursor()
+            cursor.execute(f'UPDATE test_results SET test_{test_number} = ? WHERE user_id = ?', (test_result, user_id))
             
+    @classmethod
+    def get_test_results(cls, user_id: int):
+        with sqlite3.connect(cls.__DATABASE) as connect:
+            cursor = connect.cursor()
+            cursor.execute(f'SElECT * FROM test_results WHERE user_id = ?', (user_id,))
+            return cursor.fetchone()
+
     @classmethod
     def set_user_id(cls, user_id: int):
         with sqlite3.connect(cls.__DATABASE) as connect:
@@ -97,6 +139,7 @@ class Database:
             result = cursor.fetchone()
             if not result:
                 cursor.execute('INSERT INTO users (user_id) VALUES (?)', (user_id,))
+                cursor.execute('INSERT INTO test_results (user_id) VALUES (?)', (user_id,))
     
     @classmethod
     def set_ticket_language(cls, ticket_language: str, user_id: int):
@@ -111,7 +154,7 @@ class Database:
             cursor.execute('UPDATE users SET test = ? WHERE user_id = ?', (test_number, user_id))
     
     @classmethod
-    def get_test_number(cls, user_id):
+    def get_test_number(cls, user_id: int):
         with sqlite3.connect(cls.__DATABASE) as connect:
             cursor = connect.cursor()
             cursor.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
@@ -119,7 +162,7 @@ class Database:
             return result[2]
     
     @classmethod
-    def get_ticket_language(cls, user_id):
+    def get_ticket_language(cls, user_id: int):
         with sqlite3.connect(cls.__DATABASE) as connect:
             cursor = connect.cursor()
             cursor.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
@@ -127,7 +170,7 @@ class Database:
             return result[1]
     
     @classmethod
-    def append_to_crrect_answers(cls, user_id):
+    def append_to_crrect_answers(cls, user_id: int):
         with sqlite3.connect(cls.__DATABASE) as connect:
             cursor = connect.cursor()
             cursor.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
@@ -135,7 +178,7 @@ class Database:
             cursor.execute('UPDATE users SET number_of_correct_answers = ? WHERE user_id = ?', (result[3] + 1, user_id))
 
     @classmethod
-    def recet_and_get_a_correct_answers(cls, user_id):
+    def recet_and_get_a_correct_answers(cls, user_id: int):
         with sqlite3.connect(cls.__DATABASE) as connect:
             cursor = connect.cursor()
             cursor.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
@@ -156,7 +199,7 @@ class Database:
             )''')
 
     @classmethod
-    def add_admin(cls, admin_id):
+    def add_admin(cls, admin_id: int):
         with sqlite3.connect(cls.__DATABASE) as connect:
             cursor = connect.cursor()
             cursor.execute('SELECT * FROM admins WHERE admin_id = ?', (admin_id,))
@@ -183,8 +226,17 @@ class Database:
             cursor.execute('UPDATE admins SET possible_answer = ? WHERE admin_id = ?', (possible_answer, admin_id))
 
     @classmethod
-    def get_admin_data(cls, admin_id):
+    def get_admin_data(cls, admin_id: int):
         with sqlite3.connect(cls.__DATABASE) as connect:
             cursor = connect.cursor()
             cursor.execute('SELECT * FROM admins WHERE admin_id = ?', (admin_id,))
             return cursor.fetchone()
+
+    @staticmethod
+    def create_test_results_table(database):
+        colum = [f'test_{index} INTEGER DEFAULT 0' for index in range(1, 26)]
+        with sqlite3.connect(database) as connect:
+            cursor = connect.cursor()
+            request = 'CREATE TABLE IF NOT EXISTS test_results (user_id INTEGER, ' + ', '.join(colum) + ', FOREIGN KEY (user_id) REFERENCES users(user_id))'
+            cursor.execute(request)
+
