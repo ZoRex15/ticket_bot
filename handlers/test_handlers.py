@@ -60,5 +60,7 @@ async def end_poll(poll: PollAnswer, state: FSMContext):
     test_number = Database.get_test_number(poll.user.id)
     if poll.option_ids[-1] == Options.get_option(test=test_number, question=5):
         Database.append_to_crrect_answers(poll.user.id)
-    await poll.bot.send_message(chat_id=poll.user.id, text=LEXICON['end_poll'].format(result=Database.recet_and_get_a_correct_answers(poll.user.id)), reply_markup=keyboard_menu)
+    test_result = Database.recet_and_get_a_correct_answers(poll.user.id)
+    Database.update_test_result(user_id=poll.user.id, test_number=Database.get_test_number(poll.user.id), test_result=test_result)
+    await poll.bot.send_message(chat_id=poll.user.id, text=LEXICON['end_poll'].format(result=test_result), reply_markup=keyboard_menu)
     await state.clear()
