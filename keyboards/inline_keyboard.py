@@ -9,7 +9,7 @@ languages = InlineKeyboardMarkup(inline_keyboard=[
 
 help_menu = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Как мне получить билет?', callback_data='get_a_ticket')],
-    [InlineKeyboardButton(text='Как мне пройти тест?', callback_data='how_tests_pass')]
+    [InlineKeyboardButton(text='Как мне пройти тест?', callback_data='how_tests_pass')],
     [InlineKeyboardButton(text='Доступные команды', callback_data='available_commands')]
 ])
 
