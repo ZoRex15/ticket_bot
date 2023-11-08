@@ -70,6 +70,10 @@ async def set_by_language(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete()
     await callback.message.answer(text=LEXICON['set_by_language'], reply_markup=keyboard_menu)
 
+@router.callback_query(F.data == 'how_tests_pass', StateFilter(default_state))
+async def get_a_ticket(callback: CallbackQuery, state: FSMContext):
+    await callback.message.edit_text(text=LEXICON['how_tests_pass'])
+
 @router.callback_query(F.data == 'get_a_ticket', StateFilter(default_state))
 async def get_a_ticket(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(text=LEXICON['how_to_get_a_ticket'])
