@@ -21,10 +21,10 @@ def _create_poll(message_or_poll: Message, question_number: int, test_number: in
                                     type='quiz',
                                     is_anonymous=False)
 
-def _create_poll_text(test_number: int, question_number: int) -> str:
-    question = Tests.get_question(test=test_number, question=question_number)
-    answers = Answers.get_answers(ticket=test_number, question=question_number)
-    return question + '\nВарианты ответа\n' + '\n'.join(answers)
+def _create_poll_text(test_number: int, question_number: int, mode: str) -> str:
+    question = Tests.get_question(test=test_number, question=question_number, mode=mode)
+    answers = Answers.get_answers(ticket=test_number, question=question_number, mode=mode)
+    return f'<b>{question_number}. </b>' + question + '\nВарианты ответа:\n' + '\n'.join(answers)
 
 def _create_text_menu() -> str:
     return random.choice(PHRASES)
@@ -36,32 +36,35 @@ def _create_test_result_page(user_id: int, page: int):
 
 class Tests:
     with open('tests/tests.json', 'r', encoding='U8') as file:
-        __TESTS = json.load(file)
+        __TESTS_RU = json.load(file)
+    
+    with open('tests/tests_by.json', 'r', encoding='U8') as file:
+        __TESTS_BY = json.load(file)
 
     @classmethod
-    def get_question(cls, test, question):
-        return cls.__TESTS[f'ticket {test}'][f'question {question}']
-    
-    @classmethod
-    def update_question(cls, test, question, new_question):
-        with open('tests/tests.json', 'w') as file:
-            cls.__TESTS[f'ticket {test}'][f'question {question}'] = new_question
-            with open('tests/tests.json', 'w', encoding='U8') as file:
-                json.dump(cls.__TESTS, file, indent=3, ensure_ascii=False)
+    def get_question(cls, test: int, question: int, mode: str) -> str:
+        if mode == 'BY':
+            return cls.__TESTS_BY[f'ticket {test}'][f'question {question}']
+        elif mode == 'RU':
+            return cls.__TESTS_RU[f'ticket {test}'][f'question {question}']
+        else:
+            raise AttributeError()
 
 class Answers:
-    with open('tests/answers.json', 'r', encoding='U8') as file:
-        __ANSWERS = json.load(file)
+    with open('tests/answers.json', 'r', encoding='utf-8') as file:
+        __ANSWERS_RU = json.load(file)
+
+    with open('tests/answers_by.json', 'r', encoding='utf-8') as file:
+        __ANSWERS_BY = json.load(file)
 
     @classmethod
-    def get_answers(cls, ticket: int, question: int) -> list:
-        return cls.__ANSWERS[f'ticket {ticket}'][f'question {question}']
-    
-    @classmethod
-    def update_answer(cls, ticket: int, question: int, possible_answer: str, text: str):
-        cls.__ANSWERS[f'ticket {ticket}'][f'question {question}'][possible_answer] = possible_answer + ' ' + text
-        with open('tests/answers.json', 'w', encoding='U8') as file:
-            json.dump(cls.__ANSWERS, file, indent=3, ensure_ascii=False)
+    def get_answers(cls, ticket: int, question: int, mode: str) -> list:
+        if mode == 'BY':
+            return cls.__ANSWERS_BY[f'ticket {ticket}'][f'question {question}']
+        elif mode == 'RU':
+            return cls.__ANSWERS_RU[f'ticket {ticket}'][f'question {question}']
+        else:
+            raise AttributeError()
 
 class Options:
     with open('tests/options.json', 'r') as file:
@@ -95,6 +98,14 @@ class Database:
             PRIMARY KEY(user_id)
             )''')
         cls.create_test_results_table(cls.__DATABASE)
+
+    @classmethod
+    def get_the_number_of_users(cls):
+        with sqlite3.connect(cls.__DATABASE) as connect:
+            cursor = connect.cursor()
+            cursor.execute('SELECT * FROM users')
+            result = cursor.fetchall()
+            return len(result)
 
     @classmethod
     def get_test_number(cls, user_id):
@@ -162,7 +173,7 @@ class Database:
             return result[2]
     
     @classmethod
-    def get_ticket_language(cls, user_id: int):
+    def get_user_language(cls, user_id: int):
         with sqlite3.connect(cls.__DATABASE) as connect:
             cursor = connect.cursor()
             cursor.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
