@@ -21,9 +21,7 @@ menu = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 admin_menu = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Изменить вопрос', callback_data='update_question')],
-    [InlineKeyboardButton(text='Изменить вариант ответа', callback_data='update_option')],
-    [InlineKeyboardButton(text='Изменить текст варианта ответа', callback_data='update_answer_text')]
+    [InlineKeyboardButton(text='Количество пользователей', callback_data='the_number_of_users')]
 ])
 
 def create_pagination_inline_keyboard(page):
