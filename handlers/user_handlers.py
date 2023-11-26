@@ -1,5 +1,5 @@
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery, FSInputFile, ReplyKeyboardRemove
+from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.filters import Command, CommandStart, StateFilter
 from aiogram.fsm.state import default_state
 from aiogram.fsm.context import FSMContext
@@ -7,17 +7,13 @@ from aiogram.fsm.context import FSMContext
 
 from lexicon.lexicon import LEXICON
 from keyboards.keyboard import start_setting, create_ticket_keyboard, keyboard_menu
-from keyboards.inline_keyboard import languages, help_menu, menu, admin_menu, create_pagination_inline_keyboard
-from FSM.state import FSMSettings, FSMTakeTheTest, FSMAdminState, FSMTakeTheTicket
+from keyboards.inline_keyboard import languages, help_menu, menu, create_pagination_inline_keyboard
+from FSM.state import FSMSettings, FSMTakeTheTicket
 from path.path import path_ticket_by, path_ticket_ru
 from service.service import Database, _create_text_menu, _create_test_result_page
-from filters.filters import IsAdmin
-from config.config import load_config, Config
 
 
-config: Config = load_config()
 router: Router = Router()
-
 
 @router.message(CommandStart(), StateFilter(default_state))
 async def start(message: Message, state: FSMContext):
