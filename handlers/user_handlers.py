@@ -8,11 +8,12 @@ from aiogram.fsm.context import FSMContext
 from lexicon.lexicon import LEXICON
 from keyboards.keyboard import start_setting, create_ticket_keyboard, keyboard_menu
 from keyboards.inline_keyboard import languages, help_menu, menu, admin_menu, create_pagination_inline_keyboard
-from FSM.state import FSMSettings, FSMTakeTheTest, FSMAdminState
+from FSM.state import FSMSettings, FSMTakeTheTest, FSMAdminState, FSMTakeTheTicket
 from path.path import path_ticket_by, path_ticket_ru
 from service.service import Database, _create_text_menu, _create_test_result_page
 from filters.filters import IsAdmin
 from config.config import load_config, Config
+
 
 config: Config = load_config()
 router: Router = Router()
@@ -39,13 +40,6 @@ async def send_menu(message: Message, state: FSMContext):
 async def cancel(message: Message, state: FSMContext):
     await message.answer(LEXICON['cancel'], reply_markup=keyboard_menu)
     await state.clear()
-
-@router.message(Command(commands=['admin_menu']), StateFilter(default_state), IsAdmin(config.tg_bot.admin_ids))
-async def send_admin_menu(message: Message, state: FSMContext):
-    Database.create_admin_table()
-    Database.add_admin(message.from_user.id)
-    await message.answer(LEXICON['admin_menu'], reply_markup=admin_menu)
-    await state.set_state(FSMAdminState.in_admin_menu)
 
 @router.message(F.text == '🔧Настройки⚙️', StateFilter(default_state))
 async def start_settings(message: Message, state: FSMContext):
@@ -85,13 +79,8 @@ async def available_commands(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == 'go_to_ticket', StateFilter(default_state))
 async def go_to_ticket(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete()
+    await state.set_state(FSMTakeTheTicket.ticket_choice)
     await callback.message.answer(text=LEXICON['go_to_ticket'], reply_markup=create_ticket_keyboard())
-
-@router.callback_query(F.data == 'go_to_tests', StateFilter(default_state))
-async def go_to_tests(callback: CallbackQuery, state: FSMContext):
-    await callback.message.delete()
-    await callback.message.answer(text=LEXICON['go_to_tests'], reply_markup=create_ticket_keyboard())
-    await state.set_state(FSMTakeTheTest.question_1)
 
 @router.callback_query(F.data == 'settings', StateFilter(default_state))
 async def settings(callback: CallbackQuery, state: FSMContext):
@@ -136,13 +125,13 @@ async def forward(callback: CallbackQuery, state: FSMContext):
         ),
         reply_markup=create_pagination_inline_keyboard(page=page - 1))
 
-
-@router.message(StateFilter(default_state))
+@router.message(StateFilter(FSMTakeTheTicket.ticket_choice))
 async def send_ticket(message: Message, state: FSMContext):
-    ticket_language = Database.get_ticket_language(message.from_user.id)
-    if ticket_language == 'RU' and message.text.lower() in path_ticket_ru:
+    user_language = Database.get_user_language(message.from_user.id)
+    if user_language == 'RU' and message.text.lower() in path_ticket_ru:
         media: FSInputFile = FSInputFile(path=path_ticket_ru[message.text.lower()])
         await message.answer_document(document=media)
-    elif ticket_language == 'BY' and message.text.lower() in path_ticket_by:
+    elif user_language == 'BY' and message.text.lower() in path_ticket_by:
         media: FSInputFile = FSInputFile(path=path_ticket_by[message.text.lower()])
         await message.answer_document(document=media)
+    await state.clear()
