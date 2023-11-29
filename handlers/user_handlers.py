@@ -34,6 +34,7 @@ async def send_menu(message: Message, state: FSMContext):
 
 @router.message(Command(commands=['cancel']), ~StateFilter(default_state))
 async def cancel(message: Message, state: FSMContext):
+    Database.recet_and_get_a_correct_answers(user_id=message.from_user.id)
     await message.answer(LEXICON['cancel'], reply_markup=keyboard_menu)
     await state.clear()
 
