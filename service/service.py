@@ -21,10 +21,10 @@ def _create_poll(message_or_poll: Message, question_number: int, test_number: in
                                     type='quiz',
                                     is_anonymous=False)
 
-def _create_poll_text(test_number: int, question_number: int, mode: str) -> str:
+def _create_poll_text(user_language : str, test_number: int, question_number: int, mode: str) -> str:
     question = Tests.get_question(test=test_number, question=question_number, mode=mode)
     answers = Answers.get_answers(ticket=test_number, question=question_number, mode=mode)
-    return f'<b>{question_number}. </b>' + question + '\nВарианты ответа:\n' + '\n'.join(answers)
+    return f'<b>{question_number}. </b>' + question + {("\nВарианты ответа:\n", "\nВарыянты адказу:\n")[user_language == "BY"]} + '\n'.join(answers)
 
 def _create_text_menu() -> str:
     return random.choice(PHRASES)
