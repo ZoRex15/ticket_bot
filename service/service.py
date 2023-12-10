@@ -3,6 +3,7 @@ import sqlite3
 import random
 from lexicon.lexicon import PHRASES
 import json
+import aio_pika
 
 
 def _create_poll(message_or_poll: Message, question_number: int, test_number: int):
@@ -21,10 +22,10 @@ def _create_poll(message_or_poll: Message, question_number: int, test_number: in
                                     type='quiz',
                                     is_anonymous=False)
 
-def _create_poll_text(test_number: int, question_number: int, mode: str) -> str:
+def _create_poll_text(user_language : str, test_number: int, question_number: int, mode: str) -> str:
     question = Tests.get_question(test=test_number, question=question_number, mode=mode)
     answers = Answers.get_answers(ticket=test_number, question=question_number, mode=mode)
-    return f'<b>{question_number}. </b>' + question + '\nВарианты ответа:\n' + '\n'.join(answers)
+    return f'<b>{question_number}. </b>' + question + ("\nВарианты ответа:\n", "\nВарыянты адказу:\n")[user_language == "BY"] + '\n'.join(answers)
 
 def _create_text_menu() -> str:
     return random.choice(PHRASES)
@@ -33,6 +34,25 @@ def _create_test_result_page(user_id: int, page: int):
     result = Database.get_test_results(user_id)[1:]
     test_number = [_ for _ in range(1, 26)]
     return '\n'.join([f'📄Тест {i}: {result}/5' for result, i in zip(result[5 * (page - 1):5 * page], test_number[5 * (page - 1):5 * page])])
+
+class RabbitMQ:
+    __HOST = 'amqp://guest:guest@localhost/'
+
+    @classmethod
+    async def send_message_spam_queue(cls, chat_id: int, message_id: int) -> None:
+        connect = await aio_pika.connect(cls.__HOST)
+        user_ids = Database.get_users_ids()
+        async with connect:
+            channel = await connect.channel()
+            for user_id in user_ids:
+                message = aio_pika.Message(
+                    body=f'{user_id}:{chat_id}:{message_id}'.encode('ASCII')
+                )
+                await channel.default_exchange.publish(
+                    message=message,
+                    routing_key='spam_queue'
+                )
+        await connect.close()
 
 class Tests:
     with open('tests/tests.json', 'r', encoding='U8') as file:
@@ -203,9 +223,8 @@ class Database:
             cursor = connect.cursor()
             cursor.execute('''CREATE TABLE IF NOT EXISTS admins (
                            admin_id INTEGER,
-                           ticket INTEGER DEFAULT 0,
-                           question INTEGER DEFAULT 0,
-                           possible_answer INTEGER DEFAULT 0,
+                           message_id INTEGER,
+                           chat_id INTEGER,
                            PRIMARY KEY(admin_id)
             )''')
 
@@ -219,29 +238,38 @@ class Database:
                 cursor.execute('INSERT INTO admins (admin_id) VALUES (?)', (admin_id,))
 
     @classmethod
-    def set_test_admin(cls, admin_id: int, test: int):
+    def set_message_id(cls, admin_id: int, message_id: int):
         with sqlite3.connect(cls.__DATABASE) as connect:
             cursor = connect.cursor()
-            cursor.execute('UPDATE admins SET ticket = ? WHERE admin_id = ?', (test, admin_id))
-    
-    @classmethod
-    def set_question_admin(cls, admin_id: int, question: int):
-        with sqlite3.connect(cls.__DATABASE) as connect:
-            cursor = connect.cursor()
-            cursor.execute('UPDATE admins SET question = ? WHERE admin_id = ?', (question, admin_id))
+            cursor.execute('UPDATE admins SET message_id = ? WHERE admin_id = ?', (message_id, admin_id))
 
     @classmethod
-    def set_possible_answer(cls, admin_id: int, possible_answer: int):
+    def set_chat_id(cls, admin_id: int, chat_id: int):
         with sqlite3.connect(cls.__DATABASE) as connect:
             cursor = connect.cursor()
-            cursor.execute('UPDATE admins SET possible_answer = ? WHERE admin_id = ?', (possible_answer, admin_id))
+            cursor.execute('UPDATE admins SET chat_id = ? WHERE admin_id = ?', (chat_id, admin_id))
 
     @classmethod
-    def get_admin_data(cls, admin_id: int):
+    def get_message_id(cls, admin_id: int):
         with sqlite3.connect(cls.__DATABASE) as connect:
             cursor = connect.cursor()
-            cursor.execute('SELECT * FROM admins WHERE admin_id = ?', (admin_id,))
-            return cursor.fetchone()
+            cursor.execute('SELECT message_id FROM admins WHERE admin_id = ?', (admin_id,))
+            spam_text = cursor.fetchone()[0]
+            return spam_text
+        
+    @classmethod
+    def get_chat_id(cls, admin_id: int):
+        with sqlite3.connect(cls.__DATABASE) as connect:
+            cursor = connect.cursor()
+            cursor.execute('SELECT chat_id FROM admins WHERE admin_id = ?', (admin_id,))
+            chat_id = cursor.fetchone()[0]
+            return chat_id
+        
+    @classmethod
+    def clear_spam_settings(cls, admin_id: int) -> None:
+        with sqlite3.connect(cls.__DATABASE) as connect:
+            cursor = connect.cursor()
+            cursor.execute('DELETE FROM admins WHERE admin_id = ?', (admin_id,))
 
     @staticmethod
     def create_test_results_table(database):
@@ -250,4 +278,19 @@ class Database:
             cursor = connect.cursor()
             request = 'CREATE TABLE IF NOT EXISTS test_results (user_id INTEGER, ' + ', '.join(colum) + ', FOREIGN KEY (user_id) REFERENCES users(user_id))'
             cursor.execute(request)
+
+    @classmethod
+    def get_users_ids(cls):
+        with sqlite3.connect(cls.__DATABASE) as connect:
+            cursor = connect.cursor()
+            cursor.execute('SELECT * FROM users')
+            return (i[0] for i in cursor.fetchall())
+
+    @classmethod
+    def is_there_any_data_in_line(cls):
+        with sqlite3.connect(cls.__DATABASE) as connect:
+            cursor = connect.cursor()
+            cursor.execute('SELECT COUNT(*) FROM users_queue')
+            return True if cursor.fetchall() != [(0,)] else False
+
 
