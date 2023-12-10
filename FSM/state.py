@@ -17,3 +17,7 @@ class FSMTakeTheTest(StatesGroup):
 
 class FSMAdminState(StatesGroup):
     in_admin_menu = State()
+
+class FSMSpam(StatesGroup):
+    the_text_of_the_blower = State()
+    confirmation_of_the_newsletter = State()
