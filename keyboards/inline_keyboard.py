@@ -21,7 +21,12 @@ menu = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 admin_menu = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Количество пользователей', callback_data='the_number_of_users')]
+    [InlineKeyboardButton(text='Количество пользователей', callback_data='the_number_of_users')],
+    [InlineKeyboardButton(text='Начать рыссылку', callback_data='start_spam')]
+])
+
+confirmation_of_the_newsletter = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Да', callback_data='yes'), InlineKeyboardButton(text='Нет', callback_data='no')]
 ])
 
 def create_pagination_inline_keyboard(page):
