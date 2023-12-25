@@ -1,6 +1,12 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from service.service import Database
 
+
+to_settings = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='🔧Настройки⚙️', callback_data='settings')]
+]
+)
 
 languages = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='🇷🇺Русский🇷🇺', callback_data='ru')],
@@ -29,15 +35,29 @@ confirmation_of_the_newsletter = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Да', callback_data='yes'), InlineKeyboardButton(text='Нет', callback_data='no')]
 ])
 
-def create_pagination_inline_keyboard(page):
+def create_settings_inline_keyboard(user_id: int) -> InlineKeyboardMarkup:
+    settings = Database.get_user_settings(user_id=user_id)
     bilder = InlineKeyboardBuilder()
     buttons = {
-        '<<': 'back',
-        f'{page}/5': 'empoty',
-        '>>': 'forward'
+        f'Язык: {("🇷🇺", "🇧🇾")[settings["language"] == "BY"]}': 'switch_language',
+        f'Режим чтения: {("✈️", "💾")[settings["read_mode"] == "file"]}': 'switch_read_mode',
+        f'🏠Меню🏠': 'menu'
     }
     for text, callback_data in buttons.items():
         bilder.add(InlineKeyboardButton(text=text, callback_data=callback_data))
-    bilder.adjust(3)
+    bilder.adjust(1, 1, 1)
+    return bilder.as_markup()
+
+def create_pagination_inline_keyboard(page: int, max_pages: int = 5) -> InlineKeyboardMarkup:
+    bilder = InlineKeyboardBuilder()
+    buttons = {
+        '<<': 'back',
+        f'{page}/{max_pages}': 'empoty',
+        '>>': 'forward',
+         f'🏠Меню🏠': 'menu'
+    }
+    for text, callback_data in buttons.items():
+        bilder.add(InlineKeyboardButton(text=text, callback_data=callback_data))
+    bilder.adjust(3, 1)
     return bilder.as_markup()
 
