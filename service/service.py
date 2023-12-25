@@ -1,9 +1,8 @@
 from aiogram.types import Message, PollAnswer
 import sqlite3
-import random
-from lexicon.lexicon import PHRASES
 import json
 import aio_pika
+from path.path import path_ticket_ru_txt, path_ticket_by_txt
 
 
 def _create_poll(message_or_poll: Message, question_number: int, test_number: int):
@@ -27,13 +26,50 @@ def _create_poll_text(user_language : str, test_number: int, question_number: in
     answers = Answers.get_answers(ticket=test_number, question=question_number, mode=mode)
     return f'<b>{question_number}. </b>' + question + ("\nВарианты ответа:\n", "\nВарыянты адказу:\n")[user_language == "BY"] + '\n'.join(answers)
 
-def _create_text_menu() -> str:
-    return random.choice(PHRASES)
+def _create_text_menu(user_id: int, user_name: str) -> str:
+    user_id, language, read_mode = Database.get_user_data(user_id=user_id)
+    text_menu = f'''👤 Добро пожаловать, {user_name} 
+├Ваш ID: {user_id}
+├Язык: {('🇧🇾', '🇷🇺')[language == 'RU']}
+├Режим чтения: {("✈️", "💾")[read_mode == "file"]}'''
+    return text_menu
 
 def _create_test_result_page(user_id: int, page: int):
     result = Database.get_test_results(user_id)[1:]
     test_number = [_ for _ in range(1, 26)]
     return '\n'.join([f'📄Тест {i}: {result}/5' for result, i in zip(result[5 * (page - 1):5 * page], test_number[5 * (page - 1):5 * page])])
+
+def _get_part_text(text: str, start: int, size: int) -> tuple[str, int]:
+    end_signs = ',.!:;?<>'
+    counter = 0
+    if len(text) < start + size:
+        size = len(text) - start
+        text = text[start:start + size]
+    else:
+        if text[start + size] == '.' and text[start + size - 1] in end_signs:
+            text = text[start:start + size - 2]
+            size -= 2
+        else:
+            text = text[start:start + size]
+        for i in range(size - 1, 0, -1):
+            if text[i] in end_signs:
+                break
+            counter = size - i
+    page_text = text[:size - counter]
+    page_size = size - counter
+    return page_text, page_size
+
+def prepare_ticket(path: str, page_size: int) -> dict:
+    ticket = {}
+    with open(path, 'r', encoding='utf-8') as file:
+        obj = file.read()
+        start, page = 0, 0
+        while len(obj) > 0:
+            text, lens = _get_part_text(start=start, size=page_size, text=obj)
+            page += 1
+            obj = obj[lens:]
+            ticket[page] = text.lstrip()
+    return ticket
 
 class RabbitMQ:
     __HOST = 'amqp://guest:guest@localhost/'
@@ -54,6 +90,34 @@ class RabbitMQ:
                 )
         await connect.close()
 
+class Tickets:
+    _instance = None
+    __PAGE_SIZE = 1050
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+    
+    def __init__(self) -> None:
+        self.tickets_ru: dict[str, dict[int, str]] = {}
+        self.tickets_by: dict[str, dict[int, str]] = {}
+        for ticket in range(1, 26):
+            self.tickets_ru[f'ticket {ticket}'] = prepare_ticket(
+                path=path_ticket_ru_txt[f'билет {ticket}'],
+                page_size=self.__PAGE_SIZE
+            )
+            self.tickets_by[f'ticket {ticket}'] = prepare_ticket(
+                path=path_ticket_by_txt[f'билет {ticket}'],
+                page_size=self.__PAGE_SIZE
+            )
+
+    def get_ticket_page(self, ticket, page, user_language):
+        return self.tickets_ru[f'ticket {ticket}'][page] if user_language == 'RU' else self.tickets_by[f'ticket {ticket}'][page]
+    
+    def get_count_pages_in_ticket(self, ticket, language):
+        return len(self.tickets_ru[f'ticket {ticket}'].keys()) if language == 'RU' else len(self.tickets_by[f'ticket {ticket}'].keys())
+    
 class Tests:
     with open('tests/tests.json', 'r', encoding='U8') as file:
         __TESTS_RU = json.load(file)
@@ -111,13 +175,57 @@ class Database:
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS users (
             user_id INTEGER,
-            ticket_language TEXT DEFAULT 'RU',
-            test INTEGER DEFAULT 0,
+            language TEXT DEFAULT 'RU',
+            test INTEGER,
             number_of_correct_answers INTEGER DEFAULT 0,
             page INTEGER DEFAULT 1,
-            PRIMARY KEY(user_id)
-            )''')
+            read_mode TEXT DEFAULT 'telegram',
+            ticket INTEGER,
+            PRIMARY KEY (user_id)
+        )
+        ''')
         cls.create_test_results_table(cls.__DATABASE)
+
+    @classmethod
+    def get_user_data(cls, user_id: int) -> tuple:
+        with sqlite3.connect(cls.__DATABASE) as connect:
+            cursor = connect.cursor()
+            cursor.execute('SELECT user_id, language, read_mode FROM users WHERE user_id = ?', (user_id,))
+        return cursor.fetchall()[-1]
+    
+    @classmethod
+    def user_knock_page(cls, user_id: int) -> None:
+        with sqlite3.connect(cls.__DATABASE) as connect:
+            cursor = connect.cursor()
+            cursor.execute('UPDATE users SET page = ? WHERE user_id = ?', (1, user_id))
+
+    @classmethod
+    def set_ticket_number(cls, user_id: int, ticket_number: int) -> None:
+        with sqlite3.connect(cls.__DATABASE) as connect:
+            cursor = connect.cursor()
+            cursor.execute('UPDATE users SET ticket = ? WHERE user_id = ?', (ticket_number, user_id))
+
+    @classmethod
+    def set_read_mode(cls, user_id: int, read_mode: str):
+        with sqlite3.connect(cls.__DATABASE) as connect:
+            cursor = connect.cursor()
+            cursor.execute('UPDATE users SET read_mode = ? WHERE user_id = ?', (read_mode, user_id))
+
+    @classmethod
+    def get_user_ticket(cls, user_id: int) -> int:
+        with sqlite3.connect(cls.__DATABASE) as connect:
+            cursor = connect.cursor()
+            cursor.execute('SELECT ticket FROM users WHERE user_id = ?', (user_id,))
+            result = cursor.fetchone()[-1]
+        return result
+
+    @classmethod
+    def get_user_settings(cls, user_id: int) -> dict:
+        with sqlite3.connect(cls.__DATABASE) as connect:
+            cursor = connect.cursor()
+            cursor.execute('SELECT language, read_mode FROM users WHERE user_id = ?', (user_id,))
+            result = {i:j for i, j in zip(('language', 'read_mode'), cursor.fetchone())}
+        return result
 
     @classmethod
     def get_the_number_of_users(cls):
@@ -176,7 +284,7 @@ class Database:
     def set_ticket_language(cls, ticket_language: str, user_id: int):
         with sqlite3.connect(cls.__DATABASE) as connect:
             cursor = connect.cursor()
-            cursor.execute('UPDATE users SET ticket_language = ? WHERE user_id = ?', (ticket_language, user_id))
+            cursor.execute('UPDATE users SET language = ? WHERE user_id = ?', (ticket_language, user_id))
         
     @classmethod
     def set_test_number(cls, test_number: int, user_id: int):
@@ -188,17 +296,25 @@ class Database:
     def get_test_number(cls, user_id: int):
         with sqlite3.connect(cls.__DATABASE) as connect:
             cursor = connect.cursor()
-            cursor.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
+            cursor.execute('SELECT test FROM users WHERE user_id = ?', (user_id,))
             result = cursor.fetchone()
-            return result[2]
+            return result[-1]
+        
+    @classmethod
+    def get_user_read_mode(cls, user_id: int):
+        with sqlite3.connect(cls.__DATABASE) as connect:
+            cursor = connect.cursor()
+            cursor.execute('SELECT read_mode FROM users WHERE user_id = ?', (user_id,))
+            result = cursor.fetchone()
+            return result[-1]
     
     @classmethod
     def get_user_language(cls, user_id: int):
         with sqlite3.connect(cls.__DATABASE) as connect:
             cursor = connect.cursor()
-            cursor.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
+            cursor.execute('SELECT language FROM users WHERE user_id = ?', (user_id,))
             result = cursor.fetchone()
-            return result[1]
+            return result[-1]
     
     @classmethod
     def append_to_crrect_answers(cls, user_id: int):
