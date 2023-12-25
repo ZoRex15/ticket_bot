@@ -2,7 +2,7 @@ from aiogram.fsm.state import State, StatesGroup
 
 
 class FSMSettings(StatesGroup):
-    language_selection = State()
+    choise_settings = State()
 
 class FSMTakeTheTicket(StatesGroup):
     ticket_choice = State()
@@ -21,3 +21,6 @@ class FSMAdminState(StatesGroup):
 class FSMSpam(StatesGroup):
     the_text_of_the_blower = State()
     confirmation_of_the_newsletter = State()
+
+class FSMReadTicket(StatesGroup):
+    read_ticket = State()
