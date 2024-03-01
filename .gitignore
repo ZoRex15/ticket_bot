@@ -1,5 +1,6 @@
 t.py
 users.db
+database.db
 tests/
 spam_script.py
 # Byte-compiled / optimized / DLL files

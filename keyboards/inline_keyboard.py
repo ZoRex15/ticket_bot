@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from service.service import Database
+from database.models import User
 
 
 to_settings = InlineKeyboardMarkup(inline_keyboard=[
@@ -35,12 +35,12 @@ confirmation_of_the_newsletter = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Да', callback_data='yes'), InlineKeyboardButton(text='Нет', callback_data='no')]
 ])
 
-def create_settings_inline_keyboard(user_id: int) -> InlineKeyboardMarkup:
-    settings = Database.get_user_settings(user_id=user_id)
+def create_settings_inline_keyboard(user: User) -> InlineKeyboardMarkup:
+    
     bilder = InlineKeyboardBuilder()
     buttons = {
-        f'Язык: {("🇷🇺", "🇧🇾")[settings["language"] == "BY"]}': 'switch_language',
-        f'Режим чтения: {("✈️", "💾")[settings["read_mode"] == "file"]}': 'switch_read_mode',
+        f'Язык: {("🇷🇺", "🇧🇾")[user.language == "BY"]}': 'switch_language',
+        f'Режим чтения: {("✈️", "💾")[user.read_mode == "file"]}': 'switch_read_mode',
         f'🏠Меню🏠': 'menu'
     }
     for text, callback_data in buttons.items():
