@@ -65,7 +65,7 @@ class Database:
                                page: int = None,
                                read_mode: str = None,
                                ticket: int = None
-                               ) -> None:
+                               ) -> User:
         new_data = {
             'test': test,
             'language': language,
@@ -75,30 +75,30 @@ class Database:
             'ticket': ticket
         }
         async with cls.__async_session() as session:
-            stmt = select(User).where(User.user_id == user_id)
-            result = await session.execute(stmt)
-            user = result.scalar()
+            user = await session.get(User, user_id)
             for key, value in {key: value for key, value in new_data.items() if value is not None}.items():
                 setattr(user, key, value)
             await session.commit()
+            return user
 
     @classmethod
     async def update_admin_data(cls, 
                                 admin_id: int,
                                 message_id: int = None,
                                 chat_id: int = None
-                                ) -> None:
+                                ) -> Admin:
         new_data = {
             'message_id': message_id,
             'chat_id': chat_id
         }
         async with cls.__async_session() as session:
-            stmt = select(Admin).where(Admin.admin_id == admin_id)
-            result = await session.execute(stmt)
-            admin = result.scalar()
+            admin = await session.get(Admin, admin_id)
             for key, value in {key: value for key, value in new_data if value is not None}.items():
                 setattr(admin, key, value)
             await session.commit()
+        
+            return admin
+    
 
     @classmethod
     async def add_or_update_test_result(cls,
@@ -106,17 +106,22 @@ class Database:
                                  test_number: int,
                                  grade: int) -> None:
         async with cls.__async_session() as session:
-            
-            test_result = await session.get(TestResult, (user_id, test_number))
-            if not test_result:
-                test_result = TestResult(
+            test_result = TestResult(
                     user_id=user_id,
                     test_number=test_number,
                     grade=grade
                 )
-                session.add(test_result)
-            else:
-                test_result.grade = grade
+            await session.merge(test_result)
+            # test_result = await session.get(TestResult, (user_id, test_number))
+            # if not test_result:
+            #     test_result = TestResult(
+            #         user_id=user_id,
+            #         test_number=test_number,
+            #         grade=grade
+            #     )
+            #     session.add(test_result)
+            # else:
+            #     test_result.grade = grade
             
             await session.commit()
 

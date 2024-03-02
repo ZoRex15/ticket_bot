@@ -30,11 +30,10 @@ async def switch_language(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == 'switch_read_mode', StateFilter(FSMSettings.choise_settings))
 async def switch_read_mode(callback: CallbackQuery, state: FSMContext):
     user = await Database.get_user_data(user_id=callback.from_user.id)
-    await Database.update_user_data(
+    user = await Database.update_user_data(
         user_id=callback.from_user.id,
         read_mode=('file', 'telegram')[user.read_mode == 'file']
     )
-    user = await Database.get_user_data(user_id=callback.from_user.id)
     await callback.message.edit_text(
         text=LEXICON['settings'],
         reply_markup=create_settings_inline_keyboard(user=user)
@@ -42,11 +41,10 @@ async def switch_read_mode(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == 'menu', StateFilter(FSMSettings.choise_settings, FSMReadTicket.read_ticket))
 async def return_to_menu(callback: CallbackQuery, state: FSMContext):
-    await Database.update_user_data(
+    user = await Database.update_user_data(
         user_id=callback.from_user.id,
         page=1
         )
-    user = await Database.get_user_data(user_id=callback.from_user.id)
     await callback.message.delete()
     await callback.message.answer(text=_create_text_menu
         (
@@ -98,10 +96,10 @@ async def forward(callback: CallbackQuery, state: FSMContext):
     if user.page == 5:
         await callback.answer(LEXICON['forward_error'])
     else:
-        await Database.update_user_data(user_id=callback.from_user.id, page=user.page + 1)
-        test_result_page = await Database.get_test_result_page(page=user.page + 1, user_id=user.user_id)
+        user = await Database.update_user_data(user_id=callback.from_user.id, page=user.page + 1)
+        test_result_page = await Database.get_test_result_page(page=user.page, user_id=user.user_id)
         await callback.message.edit_text(text=test_result_page,
-        reply_markup=create_pagination_inline_keyboard(page=user.page + 1))
+        reply_markup=create_pagination_inline_keyboard(page=user.page))
 
 @router.callback_query(F.data == 'back', StateFilter(FSMSettings.choise_settings))
 async def forward(callback: CallbackQuery, state: FSMContext):
@@ -109,10 +107,10 @@ async def forward(callback: CallbackQuery, state: FSMContext):
     if user.page == 1:
         await callback.answer(LEXICON['back_error'])
     else:
-        await Database.update_user_data(user_id=callback.from_user.id, page=user.page - 1)
-        test_result_page = await Database.get_test_result_page(page=user.page - 1, user_id=user.user_id)
+        user = await Database.update_user_data(user_id=callback.from_user.id, page=user.page - 1)
+        test_result_page = await Database.get_test_result_page(page=user.page, user_id=user.user_id)
         await callback.message.edit_text(text=test_result_page,
-                            reply_markup=create_pagination_inline_keyboard(page=user.page - 1))
+                            reply_markup=create_pagination_inline_keyboard(page=user.page))
 
 @router.callback_query(F.data == 'forward', StateFilter(FSMReadTicket.read_ticket))
 async def forward(callback: CallbackQuery, state: FSMContext):
@@ -122,13 +120,13 @@ async def forward(callback: CallbackQuery, state: FSMContext):
     if user.page == max_pages:
         await callback.answer(LEXICON['forward_error'])
     else:
-        await Database.update_user_data(
+        user = await Database.update_user_data(
             user_id=callback.from_user.id,
             page=user.page + 1
         )
         await callback.message.edit_text(
-            text=tickets.get_ticket_page(ticket=user.ticket, page=user.page + 1, user_language=user.language),
-            reply_markup=create_pagination_inline_keyboard(page=user.page + 1, max_pages=max_pages)
+            text=tickets.get_ticket_page(ticket=user.ticket, page=user.page, user_language=user.language),
+            reply_markup=create_pagination_inline_keyboard(page=user.page, max_pages=max_pages)
             )
 
 @router.callback_query(F.data == 'back', StateFilter(FSMReadTicket.read_ticket))
@@ -138,16 +136,16 @@ async def forward(callback: CallbackQuery, state: FSMContext):
     if user.page == 1:
         await callback.answer(LEXICON['back_error'])
     else:
-        await Database.update_user_data(
+        user = await Database.update_user_data(
             user_id=callback.from_user.id, 
-            page=user.page - 1)
+            page=user.page)
         await callback.message.edit_text(
             text=tickets.get_ticket_page(
                 ticket=user.ticket, 
-                page=user.page - 1,
+                page=user.page,
                 user_language=user.language),
             reply_markup=create_pagination_inline_keyboard(
-                page=user.page - 1,
+                page=user.page,
                 max_pages=tickets.get_count_pages_in_ticket(user.ticket, language=user.language)),
             )
         

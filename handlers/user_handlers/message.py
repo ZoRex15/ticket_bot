@@ -35,11 +35,10 @@ async def send_menu(message: Message, state: FSMContext):
 @router.message(StateFilter(FSMTakeTheTest.question_1))
 async def test_selection(message: Message, state: FSMContext):
     result = int(message.text.split(' ')[1])
-    await Database.update_user_data(
+    user = await Database.update_user_data(
         user_id=message.from_user.id,
         test=result
     )
-    user = await Database.get_user_data(user_id=message.from_user.id)
     await message.answer(text=_create_poll_text(user_language=user.language, test_number=result, question_number=1, mode=user.language), reply_markup=ReplyKeyboardRemove())
     await _create_poll(message_or_poll=message, question_number=1, test_number=user.test)
     await state.set_state(FSMTakeTheTest.question_2)
@@ -47,11 +46,10 @@ async def test_selection(message: Message, state: FSMContext):
 @router.message(StateFilter(FSMTakeTheTicket.ticket_choice))
 async def send_ticket(message: Message, state: FSMContext):
     ticket_number = int(message.text.split()[-1])
-    await Database.update_user_data(
+    user = await Database.update_user_data(
         user_id=message.from_user.id,
         ticket=ticket_number
     )
-    user = await Database.get_user_data(user_id=message.from_user.id)
     tickets = Tickets()
     if user.read_mode == 'file':
         if user.language == 'RU' and message.text.lower() in path_ticket_ru:

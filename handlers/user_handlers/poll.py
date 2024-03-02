@@ -66,11 +66,10 @@ async def send_last_question(poll: PollAnswer, state: FSMContext):
 async def end_poll(poll: PollAnswer, state: FSMContext):
     user = await Database.get_user_data(user_id=poll.user.id)
     if poll.option_ids[-1] == Options.get_option(test=user.test, question=5):
-         await Database.update_user_data(
+        user = await Database.update_user_data(
             user_id=poll.user.id,
             number_of_correct_answers=user.number_of_correct_answers + 1
-        )
-    user = await Database.get_user_data(user_id=poll.user.id)     
+        )   
     test_result = user.number_of_correct_answers
     await Database.add_or_update_test_result(
         user_id=poll.user.id,
